@@ -14,7 +14,7 @@ const app = express()
 
 const jsonBodyMiddleware = express.json();
 app.use(jsonBodyMiddleware)
-app.use("/uploads",express.static(".\\src\\uploads"))
+app.use("/uploads",express.static("src/uploads"))
 
 app.get('/api/members/', (req, res) => {
   res.send('Hello World!')
