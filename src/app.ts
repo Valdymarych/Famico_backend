@@ -61,8 +61,6 @@ app.get('/api/tasks/:group', async (req, res) => {
         }, {
             answer: 0,
         })
-        console.log(tasks);
-        
         res.status(HTTP_STATUSES.OK_200).json({
             message : "OK",
             data: tasks
