@@ -1,4 +1,5 @@
 import express from 'express'
+const cors = require('cors')
 import Result from './models/Result';
 import User from './models/User';
 import Task from './models/Task';
@@ -13,8 +14,11 @@ const app = express()
 
 
 const jsonBodyMiddleware = express.json();
+
+app.use(cors())
 app.use(jsonBodyMiddleware)
 app.use("/uploads",express.static("src/uploads"))
+
 
 app.get('/api/members/', (req, res) => {
   res.send('Hello World!')
