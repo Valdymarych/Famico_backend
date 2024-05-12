@@ -2,7 +2,7 @@ import app from "./app"
 
 import mongoose from "mongoose"
 
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 3001
 const db_url=process.env.DB_URL || "mongodb+srv://famicoofficial24:famico@famico.6sq5hwz.mongodb.net/data?retryWrites=true&w=majority&appName=Famico"
 
 

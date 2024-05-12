@@ -1,5 +1,5 @@
 import express from 'express'
-const cors = require('cors')
+import cors from 'cors';
 import Result from './models/Result';
 import User from './models/User';
 import Task from './models/Task';
@@ -15,13 +15,19 @@ const app = express()
 
 const jsonBodyMiddleware = express.json();
 
-app.use(cors())
+const corsOptions ={
+    "origin":'*', 
+    "credentials":true,
+    "optionSuccessStatus":200
+}
+
+app.use(cors(corsOptions))
 app.use(jsonBodyMiddleware)
 app.use("/uploads",express.static("src/uploads"))
 
 
 app.get('/api/members/', (req, res) => {
-  res.send('Hello World!')
+    res.send('Hello World!')
 })
 
 
