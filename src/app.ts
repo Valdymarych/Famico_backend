@@ -54,19 +54,49 @@ app.post('/api/user', async (req, res) => {
     }
 })
 
-app.get('/api/tasks/:group', async (req, res) => {
+app.post('/api/tasks/:group', async (req, res) => {
     try {
-        const tasks = await Task.find({
-            group: req.params.group
-        }, {
-            answer: 0,
-        })
-        res.status(HTTP_STATUSES.OK_200).json({
-            message : "OK",
-            data: tasks
-        })
+        
+        //  if (new Date).getTime() >= 1716152400000     <- time revise
+        
+        const user = await User.findById(req.body._id)
+        if (user){
+            const tasks = await Task.find({
+                group: req.params.group
+            }, {
+                answer: 0,
+            })
+
+            if (!user.started) {
+                await User.findByIdAndUpdate(req.body._id,
+                    {
+                        started: true,
+                        startedTime: (new Date()).getTime(),
+                    }
+                )
+                res.status(HTTP_STATUSES.OK_200).json({
+                    code:3,
+                    message : "OK",
+                    data: tasks
+                })
+            } else {
+                res.status(HTTP_STATUSES.OK_200).json({
+                    code: 2,
+                    startedTime: user.startedTime,
+                    data: tasks,
+                    messege: "user already started"
+                })
+            }
+
+        } else {
+            res.status(HTTP_STATUSES.OK_200).json({
+                code: 1,
+                messege: "user unregistred"
+            })
+        }
     } catch (err) {
         res.status(HTTP_STATUSES.SERVER_ERROR_500).json({
+            code: 0,
             messege: "failed to load tasks"
         })
     }
@@ -109,7 +139,9 @@ app.post('/api/users', async (req, res) => {
         let doc= new User({
             firstname: req.body.firstname,
             lastname: req.body.lastname,
-            email: req.body.email
+            email: req.body.email,
+            phoneNumber: req.body.phoneNumber,
+            category: req.body.category
         })
         const user = await doc.save();
         res.status(HTTP_STATUSES.CREATED_201).json(user)

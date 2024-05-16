@@ -17,7 +17,7 @@ const TaskSchema = new mongoose.Schema(
         group: {
             type: String,
             required: true
-        },
+        }
     }
 )
 

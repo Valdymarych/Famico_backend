@@ -15,6 +15,22 @@ const UserSchema = new mongoose.Schema(
             required: true,
             unique: true
         },
+        category: {
+            type: String,
+            required: true,
+        },
+        phoneNumber: {
+            type: String,
+            required: true
+        },
+        started: {
+            type: Boolean,
+            default: false
+        },
+        startedTime: {
+            type: Number,
+            default: 0,
+        }
     }
 )
 
