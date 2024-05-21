@@ -9,7 +9,7 @@ const db_url=process.env.DB_URL || "mongodb+srv://famicoofficial24:famicoofficia
 const db = mongoose
  .connect(db_url)
  .then(()=>console.log("mongo db   OK"))
- .catch(()=>console.log("mongo db  FATAL ERROR !!!!!!!           !!!!!!!             !!!!!!!!"))
+ .catch((err)=>console.log("mongo db  FATAL ERROR !!!!!!!           !!!!!!!             !!!!!!!!"+err))
 
 app.listen(port, () => {
     console.log(`listening on port ${port}  OK`)
