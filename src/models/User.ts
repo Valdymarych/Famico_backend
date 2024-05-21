@@ -27,6 +27,10 @@ const UserSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        finished: {
+            type: Boolean,
+            default: false,
+        },
         startedTime: {
             type: Number,
             default: 0,

@@ -12,6 +12,46 @@ const HTTP_STATUSES = {
 }
 const app = express()
 
+type Consts = {
+    startTime: number,
+    duration: number,
+    individualDuration: number,
+    groups : {
+        [category: string]: string,
+    }
+}
+
+const releaseConsts : Consts = {
+    startTime: 1716325200000,
+    duration: 2*24*3600*1000,
+    individualDuration: 3600*1000,
+    groups : {
+        "5": "1",
+        "6": "1",
+        "7": "2",
+        "8": "2",
+        "9": "3",
+        "10": "3",
+        "11": "3"
+    }
+}
+
+let consts : Consts= {
+    startTime: (new Date()).getTime(),
+    duration: 100_000_000,
+    individualDuration: 100_000_000,
+    groups : {
+        "5": "1",
+        "6": "1",
+        "7": "2",
+        "8": "2",
+        "9": "3",
+        "10": "3",
+        "11": "3"
+    }
+}
+consts = releaseConsts;
+
 
 const jsonBodyMiddleware = express.json();
 
@@ -49,52 +89,90 @@ app.post('/api/user', async (req, res) => {
 
     } catch (err) {
         res.status(HTTP_STATUSES.SERVER_ERROR_500).json({
-            messege: "failed to load tasks"
+            messege: "failed to load user"
         })
     }
 })
 
-app.post('/api/tasks/:group', async (req, res) => {
+
+let codes = `
+code 0   -  failed
+code 1   -  user unregistred
+code 2   -  user already started
+code 3   -  OK user started firstly
+code 4   -  contest dont start yed
+code 5   -  contest already finished
+
+code 7   -  results saved
+code 8   -  results didnt saved
+`
+
+app.post('/api/tasks', async (req, res) => {
     try {
-        
-        //  if (new Date).getTime() >= 1716152400000     <- time revise
+        let currentTime = (new Date()).getTime()
+        if (!(currentTime>consts.startTime)){
+            res.status(HTTP_STATUSES.OK_200).json({
+                code: 4,
+                messege: "contest dont start yet"
+            })
+            return;
+        } 
+        if (!(currentTime<(consts.startTime+consts.duration))){
+            res.status(HTTP_STATUSES.OK_200).json({
+                code: 5,
+                messege: "contest already finished"
+            })
+            return;
+        }
         
         const user = await User.findById(req.body._id)
-        if (user){
-            const tasks = await Task.find({
-                group: req.params.group
-            }, {
-                answer: 0,
-            })
-
-            if (!user.started) {
-                await User.findByIdAndUpdate(req.body._id,
-                    {
-                        started: true,
-                        startedTime: (new Date()).getTime(),
-                    }
-                )
-                res.status(HTTP_STATUSES.OK_200).json({
-                    code:3,
-                    message : "OK",
-                    data: tasks
-                })
-            } else {
-                res.status(HTTP_STATUSES.OK_200).json({
-                    code: 2,
-                    startedTime: user.startedTime,
-                    data: tasks,
-                    messege: "user already started"
-                })
-            }
-
-        } else {
+        if (!user){
             res.status(HTTP_STATUSES.OK_200).json({
                 code: 1,
                 messege: "user unregistred"
             })
+            return;
         }
+
+        let userDone = ((user.started)&&((currentTime-user.startedTime)>consts.individualDuration)) || user.finished
+
+        if (userDone) {
+            res.status(HTTP_STATUSES.OK_200).json({
+                code: 5,
+                messege: "contest already finished for you"
+            })
+            return;
+        }
+        const tasks = await Task.find({
+            group: consts.groups[user.category.toString()],
+        }, {
+            answer: 0,
+        })
+
+        if (!user.started) {
+            await User.findByIdAndUpdate(req.body._id,
+                {
+                    started: true,
+                    startedTime: (new Date()).getTime(),
+                }
+            )
+            res.status(HTTP_STATUSES.OK_200).json({
+                code:3,
+                message : "OK",
+                data: tasks
+            })
+        } else {
+            res.status(HTTP_STATUSES.OK_200).json({
+                code: 2,
+                startedTime: user.startedTime,
+                data: tasks,
+                messege: "user already started"
+            })
+        }
+
     } catch (err) {
+        console.log(err);
+        
         res.status(HTTP_STATUSES.SERVER_ERROR_500).json({
             code: 0,
             messege: "failed to load tasks"
@@ -102,17 +180,59 @@ app.post('/api/tasks/:group', async (req, res) => {
     }
 })
 
+
 app.post('/api/results', async (req, res) => {
     try {
+
+        let currentTime = (new Date()).getTime()
+        if (currentTime<consts.startTime){
+            res.status(HTTP_STATUSES.OK_200).json({
+                code: 4,
+                messege: "contest dont start yet"
+            })
+            return;
+        } 
+        
+        const user = await User.findById(req.body.userId)
+        if (!user){
+            res.status(HTTP_STATUSES.OK_200).json({
+                code: 1,
+                messege: "user unregistred"
+            })
+            return;
+        }
+
+        let userDone = user.finished
+
+        if (userDone) {
+            res.status(HTTP_STATUSES.OK_200).json({
+                code: 5,
+                messege: "contest already finished for you"
+            })
+            return;
+        }
+        
+        await User.findByIdAndUpdate(req.body.userId,
+            {
+                finished:true
+            }
+        )
+
         let doc= new Result({
             userId : req.body.userId,
             data: req.body.data,
         })
-        const result = await doc.save();
-        res.status(HTTP_STATUSES.CREATED_201).json(result)
+        await doc.save();
+        res.status(HTTP_STATUSES.CREATED_201).json({
+            code:7,
+            message: "results saved"   
+        })
     } catch (err) {
-        res.status(HTTP_STATUSES.SERVER_ERROR_500).json(
-            "Не вдалось зарахувати ваші результати"
+        res.status(HTTP_STATUSES.OK_200).json(
+            {
+                code: 8,
+                message:"results didnt saved"
+            }
         )
     }
 })
@@ -125,6 +245,7 @@ app.post('/api/tasks', async (req, res) => {
             group: req.body.group,
             mark: req.body.mark
         })
+        
         const task = await doc.save();
         res.status(HTTP_STATUSES.CREATED_201).json(task)
     } catch (err) {
