@@ -222,12 +222,15 @@ app.post('/api/results', async (req, res) => {
             userId : req.body.userId,
             data: req.body.data,
         })
+        console.log(doc);
+        
         await doc.save();
         res.status(HTTP_STATUSES.CREATED_201).json({
             code:7,
             message: "results saved"   
         })
     } catch (err) {
+        console.log(err)
         res.status(HTTP_STATUSES.OK_200).json(
             {
                 code: 8,
